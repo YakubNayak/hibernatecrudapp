@@ -1,0 +1,238 @@
+Hibernate Select Query
+++++++++++++++++++++++++
+
+This is an example for loading the object from the database remember in the 
+hibernate loading 1 object from the database means applying select 
+command (select * from <table_name>) for fetching one 
+complete record from the database.
+
+
+
+Files required to execute this program.
+---------------------------------------
+
+Product.java (My POJO class)
+Product.hbm.xml  (Xml mapping file )
+hibernate.cfg.xml  (Xml configuration file)
+ClientProgram.java (java file to write our hibernate logic)
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+<class name="str.Product" table="products">
+
+<id name="productId" column="pid"  />
+<property name="proName" column="pname" length="10"/>
+<property name="price"/>
+
+</class>
+</hibernate-mapping>
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SelectTest.java
+--------------
+
+package com.aryan;
+import java.io.*;
+import org.hibernate.*;
+import org.hibernate.cfg.*;
+
+public class STest 
+{
+	public static void main(String args[])
+	{
+	Configuration cfg = new Configuration();
+	cfg.configure("hibernate.cfg.xml");
+
+	SessionFactory factory=cfg.buildSessionFactory();
+	Session session=factory.openSession();
+
+	Object o=session.load(Employee.class, new Integer(101));
+	Employee e=(Employee)o;
+
+	System.out.println("Employee name is___:"+e.getEname());
+	System.out.println("Employee Fee___:"+e.getFee());
+	
+	Object o1=session.load(Employee.class, new Integer(102));
+	Employee e1=(Employee)o1;
+
+	System.out.println("Employee name is___:"+e1.getEname());
+	System.out.println("Employee Fee___:"+e1.getFee());
+	
+	session.close();
+	factory.close();
+	}
+
+}
+
+
+
+
+Note:
+-----
+
+--> In this program Product.java is just pojo class nothing special
+--> Mapping and Configuration files are just like previous programs
+--> But in ClientProgram.java, see in line number 16 load(-,-) method which is 
+in the session, actually we have 2 methods to load the object from the database, 
+they are load and get i will explain when time comes, as of now just remember this point
+
+--> Now see line number 19,  we are going to print the product name by writing +s.getProName
+
+-->Actually once we loaded the object for the database with load or get methods 
+the object data will be loads into the Product.java(POJO) setter methods, 
+so we are printing by using getter methods
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Hibernate Delete Query
++++++++++++++++++++++++++++++
+
+This is the program to Delete a row (Object) from the database, 
+just like using delete query in the jdbc program.
+
+DeleteTest:
+-----------
+
+package com.aryan;
+import org.hibernate.*;
+import org.hibernate.cfg.*;
+
+public class SaveTest {
+	public static void main(String[] args)
+    {
+        Configuration cfg = new Configuration();
+        cfg.configure("hibernate.cfg.xml"); 
+
+        SessionFactory factory = cfg.buildSessionFactory();
+        Session session = factory.openSession();
+
+        Object o=session.load(Employee.class,new Integer(103));
+        Employee p=(Employee)o;
+
+        Transaction tx = session.beginTransaction();
+        session.delete(p);
+        System.out.println("Object Deleted successfully.....!!");
+        tx.commit();
+        session.close();
+        factory.close();
+    }
+}
+
++++++++++++++++++++++++++++
+Note:
+====
+
+-->To deleting the object( 1 row) form the database we need to call 
+delete method in the session.
+
+-->In the hibernate we have only one method to delete an object from 
+the database that is what i have shown you here..
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Hibernate Update Query
++++++++++++++++++++++++
+
+-->This is the program to update an object (1 complete row) in the database, 
+which is already persisted in the database, then we have the following two approaches…
+
+
+Approach 1
+-----------
+
+Load that object from the database, and modify its values, now hibernate automatically 
+modifies the values on to database also, when ever the transaction is committed.
+
+Approach 2:
+---------
+
+If we want to modify object in the database, then create 
+new object with same id and we must call update() given by session interface.
+
+
+
+UpdateTest:
+------------
+
+package com.aryan;
+
+import org.hibernate.*;
+import org.hibernate.cfg.*;
+
+public class UpdateTest
+{
+	public static void main(String[] args)
+	{
+
+		Configuration cfg = new Configuration();
+		cfg.configure("hibernate.cfg.xml"); 
+
+		SessionFactory factory = cfg.buildSessionFactory();
+		Session session = factory.openSession();
+		Object o=session.load(Employee.class,new Integer(102));
+		Employee s=(Employee)o;
+
+		Transaction tx = session.beginTransaction();	
+
+//s.setStno(105);   should not update, because we loaded with that number right..?
+		s.setFee(4000);   // implicitly update method will be called..
+	
+		tx.commit();
+
+		System.out.println("Object Updated successfully.....!!");
+		session.close();
+		factory.close();
+	}
+}
+
++++++++++++++++++++++++++++++++++++++++++++
+Note:
+------
+
+Notes:
+
+--> See line number 20, actually there i tried to update Stno(105), we should not do this, 
+because we have loaded the object from the database with his id number only, 
+see line number 16, if we update hibernate will rises the exception.
+
+--> See line number 24 once we call the commit(), 
+	automatically update method will be called by hibernate.
+
+--> When ever an object is loaded from the database then hibernate stores 
+the loaded object in cache-memory maintained by session-interface
+
+--> Once an object is loaded, if we do any modifications on that object by 
+calling its setter methods, then these modification are stored in the object 
+maintained by cache-memory.
+
+--> if we modify the loaded object for multiple times then also the modifications 
+will be stored in object maintained by the cache-memory only.
+
+--> when ever we issue commit() operation then hibernate verify whether any changes 
+are there between the object stored in the cache and object in the database, 
+if changes exists then hibernate automatically updates the database 
+by generating any update operation.
+
+--> What am saying is hibernate automatically maintains synchronization between 
+cache-memory object and database table objects (rows).
+
+
+
+second Approach
++++++++++++++++++
+
+Employee e1=new Employee();
+		e1.setEid(101);
+		e1.setEname("Ramayanam");
+		Transaction tx = session.beginTransaction();
+		session.update(e1);
+	
+		tx.commit();
+
++++++++++++++++++++++++++++++++++++++++++++++++++++
